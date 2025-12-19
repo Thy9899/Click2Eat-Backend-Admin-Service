@@ -58,15 +58,11 @@ router.put(
 
 // =======================================
 // CHANGE PASSWORD
-// ❌ BUG: This was calling updateAdmin (wrong!)
-// I kept your code but commented the issue.
-// If you want, I can create a correct changePassword route.
 // =======================================
 router.put(
-  "/change-password/:id",
+  "/change-password",
   authenticateToken,
-  upload.single("image"), // Not needed for password change but kept as you wrote
-  adminController.updateAdmin // ⚠️ This should be: adminController.changePassword
+  adminController.changePassword
 );
 
 /* ============================================================

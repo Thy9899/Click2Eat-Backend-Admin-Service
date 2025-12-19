@@ -8,11 +8,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "1h";
 const SALT_ROUNDS = 10;
 
-// =======================================
-// Upload buffer to Cloudinary
-// This function uploads the received image (file buffer)
-// to Cloudinary inside the folder "customer_profiles"
-// =======================================
+/**
+ * Upload image buffer to Cloudinary
+ * @purpose Upload admin profile image
+ */
 const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
@@ -23,10 +22,19 @@ const uploadToCloudinary = (fileBuffer) => {
       .end(fileBuffer);
   });
 };
+/* Explanation:
+ • Uploads image data stored in memory to Cloudinary
+ • Stores images inside "customer_profiles" folder
+ • Returns secure image URL */
 
 // =======================================
 // REGISTER ADMIN / USER
 // =======================================
+/**
+ * Register a new admin or user
+ * @route POST /api/admins/register
+ * @access Public
+ */
 const register = async (req, res) => {
   try {
     const { email, username, password, role } = req.body;
@@ -66,10 +74,20 @@ const register = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+/* Explanation:
+ • Handles registration of admin or user
+ • Validates input fields
+ • Hashes password before saving
+ • Prevents duplicate email or username */
 
 // =======================================
 // LOGIN
 // =======================================
+/**
+ * Login admin or user
+ * @route POST /api/admins/login
+ * @access Public
+ */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -115,10 +133,20 @@ const login = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+/* Explanation:
+ • Authenticates user credentials
+ • Compares hashed passwords securely
+ • Generates JWT token for authorization
+ • Returns user info and token */
 
 // =======================================
 // GET ALL ADMINS (Only Admin Role Can Access)
 // =======================================
+/**
+ * Get all admins
+ * @route GET /api/admins/profile
+ * @access Admin
+ */
 const getAllAdmins = async (req, res) => {
   try {
     // Check permission
@@ -137,10 +165,19 @@ const getAllAdmins = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+/* Explanation:
+ • Retrieves list of all admins
+ • Restricted to admin role only
+ • Returns admin data or error */
 
 // =======================================
 // UPDATE ADMIN (with optional profile image upload)
 // =======================================
+/**
+ * Update admin profile
+ * @route PUT /api/admins/profile/:id
+ * @access Admin / User
+ */
 const updateAdmin = async (req, res) => {
   try {
     const { id } = req.params;
@@ -181,24 +218,40 @@ const updateAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+/* Explanation:
+ • Updates admin profile information
+ • Supports profile image upload
+ • Hashes password if updated
+ • Returns updated admin data */
 
 // =======================================
 // CHANGE PASSWORD
 // =======================================
+/**
+ * Change admin password
+ * @route PUT /api/admins/change-password/:id
+ * @access Admin / User
+ */
 const changePassword = async (req, res) => {
   try {
-    const { id } = req.params;
+    const adminId = req.user.admin_id; // get ID from JWT
     const { currentPassword, newPassword } = req.body;
 
-    const admin = await Admin.findById(id);
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ message: "Both passwords are required" });
+
+    const admin = await Admin.findById(adminId);
     if (!admin) return res.status(404).json({ message: "Admin not found" });
 
-    // Check if current password correct
     const isMatch = await bcrypt.compare(currentPassword, admin.password);
     if (!isMatch)
       return res.status(400).json({ message: "Current password is incorrect" });
 
-    // Hash new password
+    if (await bcrypt.compare(newPassword, admin.password))
+      return res
+        .status(400)
+        .json({ message: "New password cannot be same as current password" });
+
     admin.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await admin.save();
 
@@ -209,9 +262,19 @@ const changePassword = async (req, res) => {
   }
 };
 
+/* Explanation:
+ • Allows admin to change password securely
+ • Verifies current password
+ • Hashes new password before saving */
+
 // =======================================
 // DELETE ADMIN
 // =======================================
+/**
+ * Delete admin
+ * @route DELETE /api/admins/profile/:id
+ * @access Admin
+ */
 const deleteAdmin = async (req, res) => {
   try {
     const { id } = req.params;
@@ -225,6 +288,10 @@ const deleteAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+/* Explanation:
+ • Deletes admin account by ID
+ • Restricted to admin role
+ • Returns confirmation message */
 
 module.exports = {
   register,
