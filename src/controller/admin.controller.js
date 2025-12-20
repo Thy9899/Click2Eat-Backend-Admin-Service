@@ -181,7 +181,7 @@ const getAllAdmins = async (req, res) => {
 const updateAdmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, username, password } = req.body;
+    const { email, username, password, phone } = req.body;
 
     // Find admin by ID
     const admin = await Admin.findById(id);
@@ -202,6 +202,8 @@ const updateAdmin = async (req, res) => {
       admin.password = await bcrypt.hash(password, SALT_ROUNDS);
     }
 
+    if (phone) admin.phone = phone;
+
     await admin.save();
 
     return res.json({
@@ -210,6 +212,7 @@ const updateAdmin = async (req, res) => {
         admin_id: admin._id,
         email: admin.email,
         username: admin.username,
+        phone: admin.phone,
         image: admin.image,
       },
     });

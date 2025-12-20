@@ -19,6 +19,11 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    phone: {
+      type: String,
+      required: false,
+      trim: true,
+    },
     image: {
       type: String,
       default: null,
